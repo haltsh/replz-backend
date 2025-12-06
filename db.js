@@ -3,57 +3,33 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 환경변수 디버깅
-console.log('🔍 Environment variables check:');
-console.log('MYSQLHOST:', process.env.MYSQLHOST ? '✅ Set' : '❌ Missing');
-console.log('MYSQLUSER:', process.env.MYSQLUSER ? '✅ Set' : '❌ Missing');
-console.log('MYSQLPASSWORD:', process.env.MYSQLPASSWORD ? '✅ Set' : '❌ Missing');
-console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE ? '✅ Set' : '❌ Missing');
-console.log('MYSQL_HOST:', process.env.MYSQL_HOST ? '✅ Set' : '❌ Missing');
-console.log('DB_HOST:', process.env.DB_HOST ? '✅ Set' : '❌ Missing');
-
-// 필수 환경변수 검증 (Railway 배포 시 일시적으로 비활성화)
-// const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
-// const missingVars = requiredEnvVars.filter(varName => 
-//   !process.env[varName] && !process.env[varName.replace('DB_', 'MYSQL_')]
-// );
-
-// if (missingVars.length > 0) {
-//   console.error('❌ Missing required environment variables:', missingVars);
-//   console.error('Please check your .env file (local) or Railway Variables (production)');
-//   console.error('Available env keys:', Object.keys(process.env).filter(k => k.includes('DB') || k.includes('MYSQL')));
-//   process.exit(1);
-// }
-
-// Railway MySQL 연결 설정
-// Railway 기본 변수(MYSQLHOST 등)를 우선 사용
+// Railway MySQL 연결 설정 - Railway 기본 환경변수 사용
 export const db = mysql.createPool({
-  host: process.env.MYSQLHOST || process.env.MYSQL_HOST || process.env.DB_HOST,
-  port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
-  user: process.env.MYSQLUSER || process.env.MYSQL_USER || process.env.DB_USER,
-  password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD,
-  database: process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || process.env.DB_NAME,
+  host: process.env.MYSQLHOST || process.env.DB_HOST || "localhost",
+  port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306'),
+  user: process.env.MYSQLUSER || process.env.DB_USER || "root",
+  password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD,
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME || "replz_db",
   charset: 'utf8mb4',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  connectTimeout: 10000 // 10초 타임아웃
+  connectTimeout: 10000
 });
 
-// 연결 테스트 (비동기로 변경)
+// 연결 테스트
 db.getConnection()
   .then(connection => {
     console.log('✅ MySQL Database connected successfully');
-    console.log(`📍 Host: ${process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost'}`);
-    console.log(`🗄️  Database: ${process.env.MYSQL_DATABASE || process.env.DB_NAME || 'replz_db'}`);
+    console.log(`📍 Host: ${process.env.MYSQLHOST || process.env.DB_HOST || 'localhost'}`);
+    console.log(`🗄️  Database: ${process.env.MYSQLDATABASE || process.env.DB_NAME || 'replz_db'}`);
     connection.release();
   })
   .catch(err => {
     console.error('❌ MySQL connection error:', err.message);
     console.error('⚠️  Server will continue, but database operations will fail');
-    console.error('Please check your database credentials in Railway Variables');
   });
 
 // Graceful shutdown
