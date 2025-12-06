@@ -5,11 +5,12 @@ dotenv.config();
 
 // 환경변수 디버깅
 console.log('🔍 Environment variables check:');
-console.log('DB_HOST:', process.env.DB_HOST ? '✅ Set' : '❌ Missing');
-console.log('DB_USER:', process.env.DB_USER ? '✅ Set' : '❌ Missing');
-console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '✅ Set' : '❌ Missing');
-console.log('DB_NAME:', process.env.DB_NAME ? '✅ Set' : '❌ Missing');
+console.log('MYSQLHOST:', process.env.MYSQLHOST ? '✅ Set' : '❌ Missing');
+console.log('MYSQLUSER:', process.env.MYSQLUSER ? '✅ Set' : '❌ Missing');
+console.log('MYSQLPASSWORD:', process.env.MYSQLPASSWORD ? '✅ Set' : '❌ Missing');
+console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE ? '✅ Set' : '❌ Missing');
 console.log('MYSQL_HOST:', process.env.MYSQL_HOST ? '✅ Set' : '❌ Missing');
+console.log('DB_HOST:', process.env.DB_HOST ? '✅ Set' : '❌ Missing');
 
 // 필수 환경변수 검증 (Railway 배포 시 일시적으로 비활성화)
 // const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
@@ -25,21 +26,20 @@ console.log('MYSQL_HOST:', process.env.MYSQL_HOST ? '✅ Set' : '❌ Missing');
 // }
 
 // Railway MySQL 연결 설정
-// Railway에서는 MYSQL_ 접두사, 로컬에서는 DB_ 접두사 사용
+// Railway 기본 변수(MYSQLHOST 등)를 우선 사용
 export const db = mysql.createPool({
-  host: process.env.MYSQL_HOST || process.env.DB_HOST,
-  port: parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
-  user: process.env.MYSQL_USER || process.env.DB_USER,
-  password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD,
-  database: process.env.MYSQL_DATABASE || process.env.DB_NAME,
+  host: process.env.MYSQLHOST || process.env.MYSQL_HOST || process.env.DB_HOST,
+  port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
+  user: process.env.MYSQLUSER || process.env.MYSQL_USER || process.env.DB_USER,
+  password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD,
+  database: process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || process.env.DB_NAME,
   charset: 'utf8mb4',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  connectTimeout: 10000, // 10초 타임아웃
-  acquireTimeout: 10000  // 10초 타임아웃
+  connectTimeout: 10000 // 10초 타임아웃
 });
 
 // 연결 테스트 (비동기로 변경)
