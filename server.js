@@ -12,9 +12,15 @@ import healthRouter from './routes/health.js';
 
 const app = express();
 
-// CORS 설정 (제일 먼저)
+// CORS 설정 - Railway 배포 시 프론트엔드 도메인 추가
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL // Railway 프론트엔드 URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: allowedOrigins,
   credentials: true
 }));
 
@@ -26,7 +32,28 @@ app.use("/uploads", express.static("uploads"));
 
 // 루트 경로
 app.get("/", (req, res) => {
-  res.send("✅ Backend server is running!");
+  res.json({ 
+    message: "✅ Replz Backend API is running!",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/auth",
+      inventories: "/api/inventories",
+      items: "/api/items",
+      receipts: "/api/receipts",
+      recipes: "/api",
+      users: "/api/users",
+      health: "/api/health"
+    }
+  });
+});
+
+// Health check endpoint for Railway
+app.get("/health", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    timestamp: new Date(),
+    uptime: process.uptime()
+  });
 });
 
 // 라우터 등록
@@ -36,7 +63,12 @@ app.use("/api/items", itemRoutes);
 app.use("/api/receipts", receiptsRoutes);
 app.use("/api", recipeRoutes);
 app.use("/api/users", usersRouter);
-app.use('/api', healthRouter);  // 건강 관리 API
+app.use('/api', healthRouter);
+
+// 404 핸들러
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
 
 // 전역 에러 핸들러
 app.use((err, req, res, next) => {
@@ -47,9 +79,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log(`📧 인증 API: http://localhost:${PORT}/api/auth`);
-  console.log(`💪 건강 API: http://localhost:${PORT}/api/health`);
+// Railway는 PORT 환경변수를 자동으로 제공
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`📧 인증 API: /api/auth`);
+  console.log(`💪 건강 API: /api/health`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
