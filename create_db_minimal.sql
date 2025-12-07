@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS replz_db;
+USE replz_db;
 -- Railway용 최소 버전 (게시글/댓글 제외)
 -- CREATE DATABASE와 USE는 제거 (Railway는 이미 DB가 있음)
 
