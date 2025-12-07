@@ -16,7 +16,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://replz-frontend.vercel.app',
+  'https://replz.vercel.app',
   process.env.FRONTEND_URL // Railway 프론트엔드 URL
 ].filter(Boolean);
 
