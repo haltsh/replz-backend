@@ -116,10 +116,24 @@ function calculateExpirationDate(days) {
 // ==============================
 // 환경 설정
 // ==============================
-const keyFilePath = path.resolve(process.cwd(), "./google-vision-key.json");
-const visionClient = new vision.ImageAnnotatorClient({
-  keyFilename: keyFilePath,
-});
+let visionClient;
+
+// Google Vision API 키 설정
+if (process.env.GOOGLE_VISION_CREDENTIALS) {
+  // Railway/Production: 환경변수에서 읽기
+  const credentials = JSON.parse(process.env.GOOGLE_VISION_CREDENTIALS);
+  visionClient = new vision.ImageAnnotatorClient({ credentials });
+  console.log('✅ Google Vision API 환경변수 로드');
+} else if (fs.existsSync('./google-vision-key.json')) {
+  // Local: 파일에서 읽기
+  const keyFilePath = path.resolve(process.cwd(), "./google-vision-key.json");
+  visionClient = new vision.ImageAnnotatorClient({ keyFilename: keyFilePath });
+  console.log('✅ Google Vision API 파일 로드');
+} else {
+  console.warn('⚠️ Google Vision API 키를 찾을 수 없습니다. OCR 비활성화');
+  visionClient = null;
+}
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -128,6 +142,12 @@ const openai = new OpenAI({
 // 🧾 함수: 이미지 경로 → 식재료 리스트 반환
 // ==============================
 export async function processReceipt(imagePath) {
+  // ✅ Vision API가 없으면 빈 객체 반환
+  if (!visionClient) {
+    console.warn('⚠️ Google Vision API 미설정 - OCR 건너뜀');
+    return {};
+  }
+
   try {
     // 1️⃣ OCR (Google Vision)
     const [result] = await visionClient.textDetection(imagePath);
