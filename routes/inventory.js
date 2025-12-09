@@ -3,7 +3,7 @@ import { db } from "../db.js";
 
 const router = express.Router();
 
-// 재고 목록 조회
+// 재고 목록 조회 (영양 정보 포함)
 router.get("/", async (req, res) => {
   try {
     const user_id = req.query.user_id || 1;
@@ -12,7 +12,12 @@ router.get("/", async (req, res) => {
       SELECT 
         i.inventory_id, 
         i.item_id,
-        it.item_name, 
+        it.item_name,
+        it.category,
+        it.calories,
+        it.carbs,
+        it.protein,
+        it.fat,
         i.quantity, 
         DATE_FORMAT(i.expiration_date, '%Y-%m-%d') as expiration_date,
         DATE_FORMAT(i.purchased_date, '%Y-%m-%d') as purchased_date,
@@ -46,6 +51,24 @@ router.post("/", async (req, res) => {
   } catch (error) {
     console.error('재고 추가 실패:', error);
     res.status(500).json({ error: '재고 추가 실패' });
+  }
+});
+
+// 재고 수량 업데이트
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id, quantity } = req.body;
+    
+    await db.query(
+      "UPDATE inventories SET quantity = ? WHERE inventory_id = ? AND user_id = ?",
+      [quantity, id, user_id]
+    );
+    
+    res.json({ message: "재고가 업데이트되었습니다!" });
+  } catch (error) {
+    console.error('재고 업데이트 실패:', error);
+    res.status(500).json({ error: '재고 업데이트 실패' });
   }
 });
 
