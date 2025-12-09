@@ -37,17 +37,46 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 재고 추가
+// ✅ 재고 추가 (중복 체크 및 자동 병합)
 router.post("/", async (req, res) => {
   try {
     const { user_id, item_id, quantity, expiration_date } = req.body;
     
-    await db.query(`
+    // 중복 체크: 같은 user_id, item_id, expiration_date
+    const [existing] = await db.query(`
+      SELECT inventory_id, quantity 
+      FROM inventories 
+      WHERE user_id = ? AND item_id = ? AND expiration_date = ?
+    `, [user_id, item_id, expiration_date]);
+    
+    if (existing.length > 0) {
+      // 이미 있으면 수량 업데이트
+      const newQuantity = existing[0].quantity + quantity;
+      await db.query(`
+        UPDATE inventories 
+        SET quantity = ? 
+        WHERE inventory_id = ?
+      `, [newQuantity, existing[0].inventory_id]);
+      
+      return res.json({ 
+        message: "재고 수량이 업데이트되었습니다!",
+        updated: true,
+        inventory_id: existing[0].inventory_id,
+        new_quantity: newQuantity
+      });
+    }
+    
+    // 없으면 새로 추가
+    const [result] = await db.query(`
       INSERT INTO inventories (user_id, item_id, quantity, expiration_date)
       VALUES (?, ?, ?, ?)
     `, [user_id, item_id, quantity, expiration_date]);
     
-    res.json({ message: "재고가 추가되었습니다!" });
+    res.json({ 
+      message: "재고가 추가되었습니다!",
+      updated: false,
+      inventory_id: result.insertId
+    });
   } catch (error) {
     console.error('재고 추가 실패:', error);
     res.status(500).json({ error: '재고 추가 실패' });
