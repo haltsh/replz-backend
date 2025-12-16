@@ -3,7 +3,125 @@ import express from 'express';
 import { db } from '../db.js';  // ✅ 중괄호로 import
 
 const router = express.Router();
+function calculateDailyNutrition({
+  gender,
+  weight,
+  activityLevel = 'moderate',
+  height,
+  age,
+  goal = 'maintain'
+}) {
+  const ACTIVITY_FACTOR = {
+    low: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    high: 1.725,
+    very_high: 1.9
+  };
 
+  // BMR 계산
+  const bmr = height && age
+    ? gender === 'M'
+      ? 10 * weight + 6.25 * height - 5 * age + 5
+      : 10 * weight + 6.25 * height - 5 * age - 161
+    : gender === 'M'
+      ? 24 * weight
+      : 22 * weight;
+
+  // TDEE 계산
+  const tdee = bmr * ACTIVITY_FACTOR[activityLevel];
+
+  // 목표 칼로리
+  const targetCalories = 
+    goal === 'lose' ? tdee - 400 :
+    goal === 'gain' ? tdee + 400 :
+    tdee;
+
+  // 탄단지 계산
+  const protein = weight * 1.4;
+  const proteinCalories = protein * 4;
+  const fatCalories = targetCalories * 0.3;
+  const fat = fatCalories / 9;
+  const carbCalories = targetCalories - proteinCalories - fatCalories;
+  const carbs = carbCalories / 4;
+
+  return {
+    bmr: Math.round(bmr),
+    tdee: Math.round(tdee),
+    targetCalories: Math.round(targetCalories),
+    macros: {
+      calories: Math.round(targetCalories),
+      carbs: Math.round(carbs),
+      protein: Math.round(protein),
+      fat: Math.round(fat)
+    }
+  };
+}
+
+// ✅ 사용자 권장 영양소 조회
+router.get('/health/standards/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // 사용자 정보 조회
+    const [users] = await db.query(
+      'SELECT height, weight, age, gender, target_weight FROM users WHERE user_id = ?',
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    const user = users[0];
+
+    // 필수 정보가 없으면 기본값 반환
+    if (!user.weight || !user.gender) {
+      return res.json({
+        calories: 2000,
+        carbs: 300,
+        protein: 48,
+        fat: 60,
+        isDefault: true
+      });
+    }
+
+    // 목표 결정 (현재 vs 목표 몸무게)
+    let goal = 'maintain';
+    if (user.target_weight) {
+      if (user.weight > user.target_weight) {
+        goal = 'lose';
+      } else if (user.weight < user.target_weight) {
+        goal = 'gain';
+      }
+    }
+
+    // 계산
+    const nutrition = calculateDailyNutrition({
+      gender: user.gender,
+      weight: user.weight,
+      activityLevel: 'moderate',
+      height: user.height,
+      age: user.age,
+      goal
+    });
+
+    res.json({
+      ...nutrition.macros,
+      isDefault: false,
+      goal,
+      bmr: nutrition.bmr,
+      tdee: nutrition.tdee
+    });
+
+  } catch (error) {
+    console.error('❌ 권장 영양소 조회 실패:', error);
+    res.status(500).json({ 
+      error: '권장 영양소 조회에 실패했습니다.',
+      message: error.message 
+    });
+  }
+});
 // 1. 사용자 건강 프로필 조회
 router.get('/users/:userId', async (req, res) => {
   try {
