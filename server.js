@@ -9,6 +9,7 @@ import recipeRoutes from "./routes/recipe.js";
 import authRoutes from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import healthRouter from './routes/health.js';
+import intakeRouter from './routes/intake.js'; // 추가
 
 const app = express();
 
@@ -45,7 +46,8 @@ app.get("/", (req, res) => {
       receipts: "/api/receipts",
       recipes: "/api",
       users: "/api/users",
-      health: "/api/health"
+      health: "/api/health",
+      intake: "/api/intake" // 추가
     }
   });
 });
@@ -67,6 +69,7 @@ app.use("/api/receipts", receiptsRoutes);
 app.use("/api", recipeRoutes);
 app.use("/api/users", usersRouter);
 app.use('/api', healthRouter);
+app.use('/api', intakeRouter); // 추가
 
 // 404 핸들러
 app.use((req, res) => {
@@ -89,5 +92,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`📧 인증 API: /api/auth`);
   console.log(`💪 건강 API: /api/health`);
+  console.log(`🍽️ 섭취 API: /api/intake`); // 추가
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
