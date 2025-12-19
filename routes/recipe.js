@@ -508,4 +508,33 @@ router.put('/cooked-meals/:mealId', async (req, res) => {
   }
 });
 
+// 남은 음식 업데이트 (PATCH) - 추가
+router.patch('/cooked-meals/:mealId', async (req, res) => {
+  try {
+    const { mealId } = req.params;
+    const { remaining_portions } = req.body;
+    
+    console.log('📝 남은 음식 업데이트 (PATCH):', mealId, `(남은 양: ${remaining_portions})`);
+    
+    if (remaining_portions <= 0) {
+      await db.query(
+        'DELETE FROM cooked_meals WHERE cooked_meal_id = ?', 
+        [mealId]
+      );
+      console.log('✅ 남은 음식 없음 - 자동 삭제');
+    } else {
+      await db.query(
+        'UPDATE cooked_meals SET remaining_portions = ? WHERE cooked_meal_id = ?',
+        [remaining_portions, mealId]
+      );
+      console.log('✅ 남은 음식 업데이트 완료');
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ 남은 음식 업데이트 실패:', error);
+    res.status(500).json({ error: '남은 음식 업데이트 실패' });
+  }
+});
+
 export default router;
