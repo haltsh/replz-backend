@@ -3,7 +3,7 @@ import { db } from "../db.js";
 
 const router = express.Router();
 
-// 재고 목록 조회 (영양 정보 포함)
+// 재고 목록 조회 (단위 포함)
 router.get("/", async (req, res) => {
   try {
     const user_id = req.query.user_id || 1;
@@ -18,7 +18,8 @@ router.get("/", async (req, res) => {
         it.carbs,
         it.protein,
         it.fat,
-        i.quantity, 
+        i.quantity,
+        i.unit,
         DATE_FORMAT(i.expiration_date, '%Y-%m-%d') as expiration_date,
         DATE_FORMAT(i.purchased_date, '%Y-%m-%d') as purchased_date,
         DATEDIFF(i.expiration_date, CURDATE()) as dday,
@@ -37,17 +38,17 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ 재고 추가 (중복 체크 및 자동 병합)
+// 재고 추가 (단위 포함, 중복 체크)
 router.post("/", async (req, res) => {
   try {
-    const { user_id, item_id, quantity, expiration_date } = req.body;
+    const { user_id, item_id, quantity, unit, expiration_date } = req.body;
     
-    // 중복 체크: 같은 user_id, item_id, expiration_date
+    // 중복 체크: 같은 user_id, item_id, unit, expiration_date
     const [existing] = await db.query(`
       SELECT inventory_id, quantity 
       FROM inventories 
-      WHERE user_id = ? AND item_id = ? AND expiration_date = ?
-    `, [user_id, item_id, expiration_date]);
+      WHERE user_id = ? AND item_id = ? AND unit = ? AND expiration_date = ?
+    `, [user_id, item_id, unit || '개', expiration_date]);
     
     if (existing.length > 0) {
       // 이미 있으면 수량 업데이트
@@ -68,9 +69,9 @@ router.post("/", async (req, res) => {
     
     // 없으면 새로 추가
     const [result] = await db.query(`
-      INSERT INTO inventories (user_id, item_id, quantity, expiration_date)
-      VALUES (?, ?, ?, ?)
-    `, [user_id, item_id, quantity, expiration_date]);
+      INSERT INTO inventories (user_id, item_id, quantity, unit, expiration_date)
+      VALUES (?, ?, ?, ?, ?)
+    `, [user_id, item_id, quantity, unit || '개', expiration_date]);
     
     res.json({ 
       message: "재고가 추가되었습니다!",
