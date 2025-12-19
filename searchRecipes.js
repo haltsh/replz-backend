@@ -93,7 +93,13 @@ export async function searchRecipes(ingredients, grocery, limit = 5) {
   let materialsNameVector = null;
   let grocery_vector = null;
   
-  grocery_vector = await embedIngredients(grocery);
+  // ✅ grocery 임베딩
+  let grocery_vector = await embedIngredients(grocery);
+
+  // ✅ 레시피 재료도 실시간 임베딩
+  const useEmbedding = !!grocery_vector;
+
+  console.log(`🧪 임베딩 모드: ${useEmbedding ? '활성화' : '비활성화'}`);
   
   try {
     materialsNameVector = JSON.parse(
@@ -137,28 +143,28 @@ export async function searchRecipes(ingredients, grocery, limit = 5) {
       const need = [];
 
       if (useEmbedding) {
-        // 🔥 임베딩 기반 매칭
-        for (let item of rows) {
-          const itemVector = materialsNameVector[item];
-          
-          if (!itemVector) {
-            need.push(item);
-            continue;
-          }
-
-          let isHave = false;
-          for (let gv of grocery_vector) {
-            const score = cosineSimilarity(itemVector, gv);
-            if (score >= 0.6) {
-              isHave = true;
-              break;
+        // 🔥 실시간 임베딩 기반 매칭
+        const recipeItemVectors = await embedIngredients(rows);
+        
+        if (recipeItemVectors) {
+          for (let i = 0; i < rows.length; i++) {
+            const item = rows[i];
+            const itemVector = recipeItemVectors[i];
+            
+            let isHave = false;
+            for (let gv of grocery_vector) {
+              const score = cosineSimilarity(itemVector, gv);
+              if (score >= 0.6) {
+                isHave = true;
+                break;
+              }
             }
-          }
-
-          if (isHave) {
-            have.push(item);
-          } else {
-            need.push(item);
+            
+            if (isHave) {
+              have.push(item);
+            } else {
+              need.push(item);
+            }
           }
         }
       } else {
