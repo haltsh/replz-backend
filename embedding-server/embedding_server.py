@@ -53,3 +53,10 @@ def embed(req: EmbedRequest):
         "count": len(texts),
         "model": MODEL_NAME
     }
+
+# --------------------
+# Health Check
+# --------------------
+@app.get("/")
+def health():
+    return {"status": "ok", "model": MODEL_NAME}

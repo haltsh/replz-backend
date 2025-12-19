@@ -14,21 +14,17 @@ async function embedIngredients(ingredients) {
   }
 
   try {
-    const res = await fetch(`${EMBEDDING_SERVER}/embed`, {
-      method: "POST",
+    const res = await axios.post(`${EMBEDDING_SERVER}/embed`, {
+      texts: ingredients
+    }, {
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ texts: ingredients }),
+      timeout: 10000
     });
 
-    if (!res.ok) {
-      throw new Error("Embedding server error");
-    }
-
-    const data = await res.json();
-    return data.embeddings;
+    return res.data.embeddings;
   } catch (error) {
     console.error("⚠️ 임베딩 서버 연결 실패, 기본 매칭 사용:", error.message);
-    return null; // ✅ 실패 시 null 반환
+    return null;
   }
 }
 
