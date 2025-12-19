@@ -66,10 +66,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/inventories", inventoryRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/receipts", receiptsRoutes);
-app.use("/api", recipeRoutes);
 app.use("/api/users", usersRouter);
 app.use('/api', healthRouter);
-app.use('/api', intakeRouter); // 추가
+app.use('/api', intakeRouter);
+app.use("/api", recipeRoutes);
 
 // 404 핸들러
 app.use((req, res) => {
