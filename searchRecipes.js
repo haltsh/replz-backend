@@ -13,6 +13,9 @@ async function embedIngredients(ingredients) {
     return [];
   }
 
+  console.log(`🔗 임베딩 서버 연결 시도: ${EMBEDDING_SERVER}`);
+  console.log(`📤 전송할 재료:`, ingredients);
+
   try {
     const res = await axios.post(`${EMBEDDING_SERVER}/embed`, {
       texts: ingredients
@@ -20,10 +23,11 @@ async function embedIngredients(ingredients) {
       headers: { "Content-Type": "application/json" },
       timeout: 10000
     });
-
+    console.log(`✅ 임베딩 성공! 벡터 수:`, res.data.embeddings.length);
     return res.data.embeddings;
   } catch (error) {
-    console.error("⚠️ 임베딩 서버 연결 실패, 기본 매칭 사용:", error.message);
+    console.error("❌ 임베딩 서버 연결 실패:", error.message);
+    console.error("에러 상세:", error.response?.data || error.code);
     return null;
   }
 }
