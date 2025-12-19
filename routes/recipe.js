@@ -385,4 +385,127 @@ router.delete('/recipes/:id', async (req, res) => {
   }
 });
 
+// ==========================================
+// 남은 음식 관리 (Cooked Meals)
+// ==========================================
+
+// 남은 음식 조회
+router.get('/cooked-meals/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const [rows] = await db.query(`
+      SELECT * FROM cooked_meals 
+      WHERE user_id = ? AND remaining_portions > 0 
+      ORDER BY cooked_date DESC
+    `, [userId]);
+    
+    res.json(rows);
+  } catch (error) {
+    console.error('❌ 남은 음식 조회 실패:', error);
+    res.status(500).json({ error: '남은 음식 조회 실패' });
+  }
+});
+
+// 남은 음식 추가
+router.post('/cooked-meals', async (req, res) => {
+  try {
+    const { 
+      user_id, 
+      recipe_title, 
+      recipe_url, 
+      total_portions, 
+      remaining_portions,
+      cooked_date, 
+      calories_per_portion, 
+      carbs_per_portion, 
+      protein_per_portion, 
+      fat_per_portion 
+    } = req.body;
+    
+    console.log('🍱 남은 음식 저장:', recipe_title, `(남은 양: ${remaining_portions})`);
+    
+    const [result] = await db.query(`
+      INSERT INTO cooked_meals 
+      (user_id, recipe_title, recipe_url, total_portions, remaining_portions,
+       cooked_date, calories_per_portion, carbs_per_portion, 
+       protein_per_portion, fat_per_portion)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      user_id, 
+      recipe_title, 
+      recipe_url, 
+      total_portions, 
+      remaining_portions,
+      cooked_date, 
+      calories_per_portion, 
+      carbs_per_portion, 
+      protein_per_portion, 
+      fat_per_portion
+    ]);
+    
+    console.log('✅ 남은 음식 저장 완료');
+    
+    res.json({ 
+      success: true, 
+      cooked_meal_id: result.insertId 
+    });
+  } catch (error) {
+    console.error('❌ 남은 음식 저장 실패:', error);
+    res.status(500).json({ error: '남은 음식 저장 실패' });
+  }
+});
+
+// 남은 음식 삭제
+router.delete('/cooked-meals/:mealId', async (req, res) => {
+  try {
+    const { mealId } = req.params;
+    
+    console.log('🗑️ 남은 음식 삭제:', mealId);
+    
+    await db.query(
+      'DELETE FROM cooked_meals WHERE cooked_meal_id = ?', 
+      [mealId]
+    );
+    
+    console.log('✅ 남은 음식 삭제 완료');
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ 남은 음식 삭제 실패:', error);
+    res.status(500).json({ error: '남은 음식 삭제 실패' });
+  }
+});
+
+// 남은 음식 업데이트 (추가로 먹었을 때)
+router.put('/cooked-meals/:mealId', async (req, res) => {
+  try {
+    const { mealId } = req.params;
+    const { remaining_portions } = req.body;
+    
+    console.log('📝 남은 음식 업데이트:', mealId, `(남은 양: ${remaining_portions})`);
+    
+    if (remaining_portions <= 0) {
+      // 남은 양이 0이면 삭제
+      await db.query(
+        'DELETE FROM cooked_meals WHERE cooked_meal_id = ?', 
+        [mealId]
+      );
+      console.log('✅ 남은 음식 없음 - 자동 삭제');
+    } else {
+      // 남은 양 업데이트
+      await db.query(
+        'UPDATE cooked_meals SET remaining_portions = ? WHERE cooked_meal_id = ?',
+        [remaining_portions, mealId]
+      );
+      console.log('✅ 남은 음식 업데이트 완료');
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ 남은 음식 업데이트 실패:', error);
+    res.status(500).json({ error: '남은 음식 업데이트 실패' });
+  }
+});
+
 export default router;
