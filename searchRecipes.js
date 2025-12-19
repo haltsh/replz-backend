@@ -94,12 +94,7 @@ export async function searchRecipes(ingredients, grocery, limit = 5) {
   let grocery_vector = null;
   
   // ✅ grocery 임베딩
-  let grocery_vector = await embedIngredients(grocery);
-
-  // ✅ 레시피 재료도 실시간 임베딩
-  const useEmbedding = !!grocery_vector;
-
-  console.log(`🧪 임베딩 모드: ${useEmbedding ? '활성화' : '비활성화'}`);
+  grocery_vector = await embedIngredients(grocery);
   
   try {
     materialsNameVector = JSON.parse(
@@ -109,7 +104,8 @@ export async function searchRecipes(ingredients, grocery, limit = 5) {
     console.log("⚠️ materials_name_vector.json 파일 없음");
   }
 
-  const useEmbedding = grocery_vector && materialsNameVector; // ✅ 임베딩 사용 여부
+  const useEmbedding = grocery_vector; // ✅ 임베딩 사용 여부
+  console.log(`🧪 임베딩 모드: ${useEmbedding ? '활성화' : '비활성화'}`);
 
   // ✅ 상세 페이지 파싱
   for (const recipe of recipes) {
@@ -166,18 +162,26 @@ export async function searchRecipes(ingredients, grocery, limit = 5) {
               need.push(item);
             }
           }
+        } else {
+          // ✅ 임베딩 실패 시 기본 매칭 (여기 추가!)
+          for (let item of rows) {
+            if (grocery.some(g => g.includes(item) || item.includes(g))) {
+              have.push(item);
+            } else {
+              need.push(item);
+            }
+          }
         }
       } else {
         // 🔥 기본 문자열 매칭
         for (let item of rows) {
-          if (grocery.includes(item)) {
+          if (grocery.some(g => g.includes(item) || item.includes(g))) {  // ✅ 수정
             have.push(item);
           } else {
             need.push(item);
           }
         }
       }
-
       recipe.have = have;
       recipe.need = need;
 
