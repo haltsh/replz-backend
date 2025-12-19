@@ -187,7 +187,7 @@ router.post("/add-to-inventory", async (req, res) => {
     }
 
     // 각 아이템 처리
-    for (const { item_name, quantity, expiration_date } of items) {
+    for (const { item_name, quantity, unit, expiration_date } of items) {  // unit 추가
       // item_name으로 item_id 찾기
       const [itemResult] = await db.query(
         "SELECT item_id FROM items WHERE item_name = ?",
@@ -203,18 +203,18 @@ router.post("/add-to-inventory", async (req, res) => {
         
         const item_id = insertResult.insertId;
 
-        // inventories에 추가
+        // inventories에 추가 (unit 포함)
         await db.query(
-          "INSERT INTO inventories (user_id, item_id, quantity, expiration_date) VALUES (?, ?, ?, ?)",
-          [user_id, item_id, quantity || 1, expiration_date]
+          "INSERT INTO inventories (user_id, item_id, quantity, unit, expiration_date) VALUES (?, ?, ?, ?, ?)",
+          [user_id, item_id, quantity || 1, unit || '개', expiration_date]
         );
       } else {
         const item_id = itemResult[0].item_id;
 
-        // inventories에 추가
+        // inventories에 추가 (unit 포함)
         await db.query(
-          "INSERT INTO inventories (user_id, item_id, quantity, expiration_date) VALUES (?, ?, ?, ?)",
-          [user_id, item_id, quantity || 1, expiration_date]
+          "INSERT INTO inventories (user_id, item_id, quantity, unit, expiration_date) VALUES (?, ?, ?, ?, ?)",
+          [user_id, item_id, quantity || 1, unit || '개', expiration_date]
         );
       }
     }
