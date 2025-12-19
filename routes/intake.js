@@ -30,6 +30,8 @@ router.post('/intake', async (req, res) => {
       req.body.intakeDate ??
       new Date().toISOString().split('T')[0];
 
+    const mysqlDate = new Date(intake_date).toISOString().slice(0, 19).replace('T', ' ');
+
     console.log('🧪 파싱 결과:', {
       user_id,
       meal_name,
@@ -37,7 +39,7 @@ router.post('/intake', async (req, res) => {
       carbs,
       protein,
       fat,
-      intake_date
+      intake_date: mysqlDate
     });
 
     /**
@@ -73,7 +75,7 @@ router.post('/intake', async (req, res) => {
         Math.round(carbs),
         Math.round(protein),
         Math.round(fat),
-        intake_date
+        mysqlDate
       ]
     );
 

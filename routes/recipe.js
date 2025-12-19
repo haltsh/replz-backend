@@ -424,6 +424,7 @@ router.post('/cooked-meals', async (req, res) => {
     } = req.body;
     
     console.log('🍱 남은 음식 저장:', recipe_title, `(남은 양: ${remaining_portions})`);
+    const mysqlDate = new Date(cooked_date).toISOString().slice(0, 19).replace('T', ' ');
     
     const [result] = await db.query(`
       INSERT INTO cooked_meals 
@@ -437,7 +438,7 @@ router.post('/cooked-meals', async (req, res) => {
       recipe_url, 
       total_portions, 
       remaining_portions,
-      cooked_date, 
+      mysqlDate, 
       calories_per_portion, 
       carbs_per_portion, 
       protein_per_portion, 
