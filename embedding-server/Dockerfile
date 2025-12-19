@@ -2,7 +2,6 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# 불필요한 파일 제거 + CPU torch 사용
 RUN pip install --no-cache-dir \
     fastapi==0.104.1 \
     uvicorn==0.24.0 \
@@ -14,6 +13,6 @@ RUN pip install --no-cache-dir \
 
 COPY embedding_server.py .
 
-EXPOSE 8000
+EXPOSE 7860
 
-CMD uvicorn embedding_server:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD uvicorn embedding_server:app --host 0.0.0.0 --port 7860
