@@ -12,7 +12,7 @@ app = FastAPI(title="Embedding Server")
 # --------------------
 # Model (GLOBAL, 1회 로드)
 # --------------------
-MODEL_NAME = "BAAI/bge-m3"
+MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 model = SentenceTransformer(MODEL_NAME, device=device)
