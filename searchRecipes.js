@@ -93,13 +93,14 @@ export async function searchRecipes(ingredients, grocery, limit = 5) {
   let materialsNameVector = null;
   let grocery_vector = null;
   
+  grocery_vector = await embedIngredients(grocery);
+  
   try {
     materialsNameVector = JSON.parse(
       fs.readFileSync("./materials_name_vector.json", "utf8")
     );
-    grocery_vector = await embedIngredients(grocery);
   } catch (error) {
-    console.log("⚠️ 임베딩 비활성화, 기본 문자열 매칭 사용");
+    console.log("⚠️ materials_name_vector.json 파일 없음");
   }
 
   const useEmbedding = grocery_vector && materialsNameVector; // ✅ 임베딩 사용 여부
