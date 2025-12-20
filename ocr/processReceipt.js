@@ -224,7 +224,7 @@ ${ocrText}
     }
 
     // 4️⃣ 재료명 정규화 (materials_dict.json 기반)
-    const output = replaceIngredientKeys(ingredients);
+    const output = ingredients;
     
     // 5️⃣ 유통기한 재계산 (GPT가 잘못 계산했을 경우 대비)
     for (const [itemName, itemData] of Object.entries(output)) {

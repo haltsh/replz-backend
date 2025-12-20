@@ -38,7 +38,7 @@ class EmbedRequest(BaseModel):
 @app.post("/embed")
 def embed(req: EmbedRequest):
     # ✔ 안전장치: 짧은 재료명만
-    texts = [t[:20] for t in req.texts][:10]
+    texts = [t[:20] for t in req.texts][:50]
 
     embeddings = model.encode(
         texts,
